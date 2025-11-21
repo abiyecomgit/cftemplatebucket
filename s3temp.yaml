@@ -8,6 +8,12 @@ Resources:
       BucketName: cfs3buck6453443
       VersioningConfiguration:
         Status: Enabled
+  MyS4Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: cfs3buck6453443666687
+      VersioningConfiguration:
+        Status: Enabled       
 
 Outputs:
   BucketName:
