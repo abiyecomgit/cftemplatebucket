@@ -1,0 +1,6 @@
+template-file-path: s3temp.yaml
+parameters: {}
+tags:
+  Department: IT
+  Project: GitSync-Deployment
+  Environment: Dev
