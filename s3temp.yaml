@@ -19,3 +19,83 @@ Outputs:
   BucketName:
     Description: Name of the created S3 bucket
     Value: !Ref MyS3Bucket
+
+Parameters:
+  KeyName:
+    Type: String
+    Default: Ec2KeyPair
+    Description: Name of existing EC2 KeyPair
+
+  InstanceType:
+    Type: String
+    Default: t3.micro
+
+  VolumeSize:
+    Type: Number
+    Default: 10
+  
+  VolumeType:
+    Type: String
+    Default: gp3
+
+Mappings:
+  RegionMap:
+    us-west-2:
+      AMI: ami-02b297871a94f4b42   # Amazon Linux 2023 AMI (update later if needed)
+
+DefaultVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      Tags:
+        - Key: Name
+          Value: DefaultVPC
+    Condition: AlwaysFalse
+
+DefaultSubnet:
+  Type: AWS::EC2::Subnet
+  Properties:
+    Tags:
+      - Key: Name
+        Value: DefaultSubnet
+  Condition: AlwaysFalse
+
+SecurityGroup:
+  Type: AWS::EC2::SecurityGroup
+  Properties:
+    GroupDescription: Security Group for EC2 instance
+    VpcId: !Ref AWS::NoValue   # CFN will auto-detect default VPC
+    SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: 0.0.0.0/0   # SSH open to world (you can restrict later)
+
+EC2Instance:
+  Type: AWS::EC2::Instance
+  Properties:
+    ImageId: !FindInMap [RegionMap, us-west-2, AMI]
+    InstanceType: !Ref InstanceType
+    KeyName: !Ref KeyName
+    SecurityGroupIds:
+      - !Ref SecurityGroup
+
+    BlockDeviceMappings:
+      - DeviceName: /dev/xvda
+        Ebs:
+          VolumeSize: !Ref VolumeSize
+          VolumeType: gp3
+          DeleteOnTermination: true
+
+    SubnetId: !Select 
+      - 0
+      - !GetAZs ""
+      # This selects the default subnet for the first AZ automatically.
+
+Outputs:
+InstanceId:
+  Description: EC2 Instance ID
+  Value: !Ref EC2Instance
+
+PublicIP:
+  Description: Public IP address of the instance
+  Value: !GetAtt EC2Instance.PublicIp
